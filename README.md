@@ -1,4 +1,4 @@
-TODO: error curves
+TODO: error curves, read background paper, evaluate different aspects for each step
 
 # a) Original Dataset
 
