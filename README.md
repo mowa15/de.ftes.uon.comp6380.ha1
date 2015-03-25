@@ -6,7 +6,7 @@ TODO: error curves
 
 1. data obtained from [http://wiki.cs.brynmawr.edu/?page=TwoSpiralsProblem](http://wiki.cs.brynmawr.edu/?page=TwoSpiralsProblem)
     a. version on blackboard did not contain class identifiers
-    b. according to the code in the [http://www.researchgate.net/publication/269337640_Learning_to_Tell_Two_Spirals_Apart](original paper), this seems to be the correct format
+    b. according to the code in the [original paper](http://www.researchgate.net/publication/269337640_Learning_to_Tell_Two_Spirals_Apart), this seems to be the correct format
 2. converted spaces to tabs
 3. processed with Pybrain ([pybrain-classify.py](pybrain-classify.py))
     a. followed [tutorial](http://pybrain.org/docs/tutorial/fnn.html)
@@ -20,7 +20,7 @@ TODO: error curves
 
 - reproduce by running [pybrain-classify.py](pybrain-classify.py)
 - visualization of final result not available (plot stopped responding)
-    - [original-dataset-intermedidate-output.png](intermediate output)
+    - [intermediate output](original-dataset-intermedidate-output.png)
 - training error achieved after 5000 epochs: 0.52% (1 misclassified)
 
 
