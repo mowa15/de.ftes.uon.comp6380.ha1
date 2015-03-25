@@ -1,56 +1,59 @@
 __author__ = 'Fredrik'
 
+in_file = 'data-with-headers-tabs.txt'
+margins = 0., 1.
+#in_file = 'denser-data-with-headers-tabs.txt'
+#margins = -1., 1.
+
 from pybrain.datasets            import ClassificationDataSet
 from pybrain.utilities           import percentError
 from pybrain.tools.shortcuts     import buildNetwork
-from pybrain.supervised.trainers import BackpropTrainer
+from pybrain.supervised.trainers import BackpropTrainer, RPropMinusTrainer
 from pybrain.structure.modules   import SoftmaxLayer
+from pybrain.structure.modules import TanhLayer, LinearLayer
 
 from pylab import ion, ioff, figure, draw, contourf, clf, show, hold, plot
 from scipy import diag, arange, meshgrid, where
-from numpy.random import multivariate_normal
 
-means = [(-1,0),(2,4),(3,1)]
-cov = [diag([1,1]), diag([0.5,1.2]), diag([1.5,0.7])]
-alldata = ClassificationDataSet(2, 1, nb_classes=3)
-for n in xrange(400):
-    for klass in range(3):
-        input = multivariate_normal(means[klass],cov[klass])
-        alldata.addSample(input, [klass])
+# http://stackoverflow.com/questions/10133386/pybrain-loading-data-with-numpy-loadtxt
+import numpy
+array = numpy.loadtxt(in_file, delimiter='\t', skiprows=1)
+number_of_columns = array.shape[1]
+dataset = ClassificationDataSet(number_of_columns - 1, target=1, nb_classes=2)
+for row in array:
+    dataset.addSample(row[:-1], row[-1:])
 
-tstdata, trndata = alldata.splitWithProportion( 0.25 )
+dataset._convertToOneOfMany(bounds=[0.,1.])
 
-trndata._convertToOneOfMany( )
-tstdata._convertToOneOfMany( )
+print "Number of training patterns: ", len(dataset)
+print "Input and output dimensions: ", dataset.indim, dataset.outdim
 
-print "Number of training patterns: ", len(trndata)
-print "Input and output dimensions: ", trndata.indim, trndata.outdim
-print "First sample (input, target, class):"
-print trndata['input'][0], trndata['target'][0], trndata['class'][0]
+fnn = buildNetwork( dataset.indim, 77, 77, dataset.outdim, hiddenclass=TanhLayer
+                    , outclass=LinearLayer
+    )
 
-fnn = buildNetwork( trndata.indim, 5, trndata.outdim, outclass=SoftmaxLayer )
 
-trainer = BackpropTrainer( fnn, dataset=trndata, momentum=0.1, verbose=True, weightdecay=0.01)
+#trainer = BackpropTrainer( fnn, dataset=dataset, momentum=0.5, learningrate=0.005, verbose=True)
+trainer = RPropMinusTrainer(fnn, dataset=dataset)
 
-ticks = arange(-3.,6.,0.2)
+step = 0.05
+ticks = arange(margins[0], margins[1] + step, step)
+#ticks = arange(-1.05,1.05,0.05)
 X, Y = meshgrid(ticks, ticks)
 # need column vectors in dataset, not arrays
-griddata = ClassificationDataSet(2,1, nb_classes=3)
+griddata = ClassificationDataSet(2,1, nb_classes=2)
 for i in xrange(X.size):
     griddata.addSample([X.ravel()[i],Y.ravel()[i]], [0])
 griddata._convertToOneOfMany()  # this is still needed to make the fnn feel comfy
 
-for i in range(20):
-    trainer.trainEpochs( 1 )
+for i in range(2000):
+    trainer.trainEpochs( 10 )
 
     trnresult = percentError( trainer.testOnClassData(),
-                              trndata['class'] )
-    tstresult = percentError( trainer.testOnClassData(
-           dataset=tstdata ), tstdata['class'] )
+                              dataset['class'] )
 
     print "epoch: %4d" % trainer.totalepochs, \
-          "  train error: %5.2f%%" % trnresult, \
-          "  test error: %5.2f%%" % tstresult
+          "  train error: %5.2f%%" % trnresult
 
     out = fnn.activateOnDataset(griddata)
     out = out.argmax(axis=1)  # the highest output activation gives the class
@@ -60,9 +63,9 @@ for i in range(20):
     ioff()  # interactive graphics off
     clf()   # clear the plot
     hold(True) # overplot on
-    for c in [0,1,2]:
-        here, _ = where(tstdata['class']==c)
-        plot(tstdata['input'][here,0],tstdata['input'][here,1],'o')
+    for c in [0,1]:
+        here, _ = where(dataset['class']==c)
+        plot(dataset['input'][here,0],dataset['input'][here,1],'o')
     if out.max()!=out.min():  # safety check against flat field
         contourf(X, Y, out)   # plot the contour
     ion()   # interactive graphics on
